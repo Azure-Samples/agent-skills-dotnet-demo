@@ -1,0 +1,7 @@
+name: agent-skills-dotnet-demo
+metadata:
+  template: agent-skills-dotnet-demo
+infra:
+  provider: bicep
+  path: infra
+  module: main
