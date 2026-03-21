@@ -7,7 +7,7 @@
 
 #:package Microsoft.Agents.AI@*-*
 #:package Microsoft.Agents.AI.OpenAI@*-*
-#:package Azure.AI.OpenAI@*-*
+#:package Azure.AI.OpenAI@2.8.0-beta.1
 #:package Azure.Identity@*-*
 #:package Microsoft.Extensions.Configuration@*-*
 #:package Microsoft.Extensions.Configuration.UserSecrets@*-*
