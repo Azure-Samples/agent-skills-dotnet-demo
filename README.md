@@ -94,6 +94,8 @@ The `FileAgentSkillsProvider` exposes skills as tools — the model reads skill 
 | `code-reviewer` | .NET script | Analyzes code using a C# script |
 | `data-analyzer` | Python script | Performs data analysis using Python |
 
+> **⚠️ Note on C# Script Execution:** The `code-reviewer` skill includes a C# script (`scripts/analyze.cs`), but C# script execution is **not yet supported** in the Microsoft Agent Framework and will be added in a future release. See the [Agent Skills documentation](https://learn.microsoft.com/en-us/agent-framework/agents/skills#providing-skills-to-an-agent) for the latest status. In the meantime, the skill's prompt-based instructions (defined in `SKILL.md`) still work — only the script-based static analysis step is unavailable.
+
 ## Clean Up
 
 To delete all Azure resources and clean up local configuration:
