@@ -1,0 +1,37 @@
+{
+  "registry_version": "1.0",
+  "entries": [
+    {
+      "persistent_name": "Rusty",
+      "universe": "Ocean's Eleven",
+      "role": "Lead",
+      "created_at": "2026-04-08T21:55:52Z",
+      "legacy_named": false,
+      "status": "active"
+    },
+    {
+      "persistent_name": "Linus",
+      "universe": "Ocean's Eleven",
+      "role": "Backend Dev",
+      "created_at": "2026-04-08T21:55:52Z",
+      "legacy_named": false,
+      "status": "active"
+    },
+    {
+      "persistent_name": "Basher",
+      "universe": "Ocean's Eleven",
+      "role": "DevOps",
+      "created_at": "2026-04-08T21:55:52Z",
+      "legacy_named": false,
+      "status": "active"
+    },
+    {
+      "persistent_name": "Livingston",
+      "universe": "Ocean's Eleven",
+      "role": "Tester",
+      "created_at": "2026-04-08T21:55:52Z",
+      "legacy_named": false,
+      "status": "active"
+    }
+  ]
+}
