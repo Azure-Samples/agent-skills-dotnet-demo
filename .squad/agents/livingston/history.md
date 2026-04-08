@@ -7,4 +7,48 @@
 
 ## Learnings
 
-<!-- Append new learnings below. Each entry is something lasting about the project. -->
+### Quality Analysis (2026-04-08)
+
+**Test Coverage:**
+- Zero tests exist. High priority: add unit tests for skill scripts, integration tests for FileAgentSkillsProvider, smoke tests for demo flow.
+- Python script crashes on empty CSV (IndexError on stdev). C# script doesn't handle locked files or large files.
+
+**Error Handling:**
+- No validation that User Secrets are set until demo runs.
+- No check if skills directory exists.
+- Python availability not verified before demo starts.
+- Azure credential failures show raw SDK exceptions instead of actionable guidance.
+- C# script execution limitation (not supported in Agent Framework) not obvious to new users.
+
+**Edge Cases:**
+- **Python analyze.py**: Empty CSV crashes, malformed CSV silently skips columns, no encoding handling.
+- **C# analyze.cs**: Doesn't handle file lock errors, no large-file handling, binary files treated as text.
+- **Demo prompts**: Always use valid data; error paths untested.
+
+**Configuration Robustness:**
+- setup.ps1 has good fallback for endpoint extraction, but no pre-flight network checks.
+- No validation that deployment name exists in Azure.
+- No .env file fallback; only User Secrets supported.
+- User must use exact secrets ID (`agent-skills-demo`) or demo silently fails.
+
+**Demo UX Issues:**
+- Fresh clone without setup fails at demo run with decent error message but no next step guidance.
+- If Azure credential or network fails mid-demo, user sees raw SDK error.
+- C# script limitation (documented in README as note) isn't obvious in practice — skill runs but script doesn't.
+
+**Output Consistency:**
+- AgentResponse text could be empty, truncated, or contain errors — no validation.
+- Skill output format isn't validated against expected structure.
+- Python script output format is non-deterministic based on input data.
+
+**Recommended Priority:**
+1. Add pre-flight validation (check creds, skills dir, Python).
+2. Fix Python script robustness (empty CSV, malformed data).
+3. Add test coverage for skill scripts.
+4. Improve error messages with actionable guidance.
+5. Add troubleshooting guide to README.
+
+**Cross-Domain Context:**
+- **Architecture (Rusty):** Multi-turn and streaming scenarios depend on robust error handling and validated configuration. Zero test coverage blocks confidence in feature implementations. Skill result handling (proposed architecture pattern) must include input validation and error recovery.
+- **Infrastructure (Basher):** CI/CD gaps prevent validation of deployment changes. Proposed streaming + token tracking feature requires observability infrastructure (currently missing from Bicep). Multi-agent orchestration scenario will require conversation/session context persistence — not yet supported.
+- **Code (Linus):** Demo lacks try/catch around Azure calls and doesn't validate skillsDir. Hardcoded AzureCliCredential prevents DefaultAzureCredential adoption. New architecture patterns (streaming, multi-turn, multi-agent) all depend on error recovery and graceful degradation — current demo has neither.
