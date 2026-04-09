@@ -91,3 +91,31 @@
 - Manages expectations (C# script limitation clearly noted)
 
 **Phase 1 Team Outcome (2026-04-10):** Rusty delivered all 3 documentation deliverables on schedule (extending-framework guide, error-handling reference, README improvements). Full team completed Phase 1 successfully: Linus (7 code tasks), Basher (4 infra tasks), Livingston (22 tests), Rusty (3 docs). Commit `06045c6` on `squad/improvement-plan` contains all Phase 1 work and is ready for PR review to main. No critical blockers. Deferred to Phase 2: emoji encoding fix (Windows charset), architecture design for streaming/multi-agent/multi-turn scenarios, token usage/cost guide.
+### Deliverable: Comprehensive Improvement Plan (Completed 2026-04-08)
+
+**Outcome:** Created `docs/improvement-plan.md` — a 30KB structured plan document consolidating all four-perspective analysis into actionable roadmap.
+
+**Document Scope:**
+- Executive summary + current state snapshot
+- Priority matrix (16 critical/high items, 12 medium, 6 lower)
+- 7 detailed improvement domains: packages, code quality, skill bugs, scenarios, documentation, infrastructure, testing
+- 3-phase implementation roadmap (Foundations → Features → Polish)
+- Team assignments with effort estimates (80–90 total hours across squad)
+- Success criteria + risk mitigation
+
+**Key Decisions Captured:**
+1. **CRITICAL:** Pin 4 wildcard NuGet versions to GA (Microsoft.Agents.AI, Azure.Identity, Extensions.Configuration)
+2. **CRITICAL:** Fix Python edge cases (empty CSV, stdev validation) — blocks robust demos
+3. **CRITICAL:** Implement pre-flight validation (credentials, Python, skills dir)
+4. **HIGH:** "Extending Framework" guide is prerequisite for contributor onboarding
+5. **HIGH:** Multi-turn memory + streaming are highest-value Phase 2 features
+6. **MEDIUM:** Bicep parameterization enables multi-environment deployments
+
+**Phased Approach:**
+- **Phase 1 (2–3 weeks):** Stabilize core, reduce friction (package pinning, error handling, pre-flight validation, "Extending" guide)
+- **Phase 2 (3–4 weeks):** Add features (multi-turn, streaming, error fallback demo, HTTP skills, env parameterization, CI/CD)
+- **Phase 3 (2 weeks):** Polish for production (multi-agent orchestration, comprehensive testing, FAQ, observability)
+
+**Published:** Branch `squad/improvement-plan` pushed to remote; ready for Bruno's review and quarterly planning.
+
+**Next Step:** Bruno reviews plan; squad prioritizes Phase 1 scope and creates implementation tickets.

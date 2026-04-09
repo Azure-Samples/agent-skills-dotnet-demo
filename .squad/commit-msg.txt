@@ -1,0 +1,11 @@
+docs: Document improvement plan session and merge decisions
+
+- Add orchestration log (2026-04-09T00-22-scribe.md)
+- Add session log for improvement plan branch
+- Merge decision inbox → decisions.md (deduped)
+- Delete inbox files after consolidation
+
+Scribe task completion for Bruno's improvement plan review session.
+Ready for prioritization and Phase 1 scope alignment.
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
