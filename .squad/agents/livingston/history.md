@@ -52,3 +52,19 @@
 - **Architecture (Rusty):** Multi-turn and streaming scenarios depend on robust error handling and validated configuration. Zero test coverage blocks confidence in feature implementations. Skill result handling (proposed architecture pattern) must include input validation and error recovery.
 - **Infrastructure (Basher):** CI/CD gaps prevent validation of deployment changes. Proposed streaming + token tracking feature requires observability infrastructure (currently missing from Bicep). Multi-agent orchestration scenario will require conversation/session context persistence — not yet supported.
 - **Code (Linus):** Demo lacks try/catch around Azure calls and doesn't validate skillsDir. Hardcoded AzureCliCredential prevents DefaultAzureCredential adoption. New architecture patterns (streaming, multi-turn, multi-agent) all depend on error recovery and graceful degradation — current demo has neither.
+
+### Phase 1 Test Coverage (2026-04-10)
+
+**Test Suite Created:** 22 tests across 3 suites — all passing.
+
+- **Python tests (8):** Valid CSV, empty CSV, single-row, text-only columns, mixed data, missing file, zero-byte file, column names in output. Uses subprocess to test analyze.py as CLI tool.
+- **C# tests (5):** Valid file, empty file (division-by-zero guard), TODOs/long lines counting, missing file, clean file. Uses `dotnet run` to test analyze.cs.
+- **Pre-flight tests (9):** Skills directory structure, SKILL.md presence, Python/dotnet availability, User Secrets reference, skills path detection.
+
+**Bug Found:** `📊` emoji in analyze.py causes `UnicodeEncodeError: 'charmap' codec can't encode character` on Windows terminals using cp1252 encoding. Tests work around this with `PYTHONIOENCODING=utf-8` but real users may hit this.
+
+**Confirmed Fixes:** Linus already fixed empty CSV handling (now shows friendly message) and empty-file division-by-zero in C# script. Both edge-case tests pass.
+
+**Infrastructure Note:** Test runner (`pwsh tests/run-tests.ps1`) is ready for CI integration. Basher can wire it into GitHub Actions when pipeline is set up.
+
+**Phase 1 Team Outcome (2026-04-10):** Livingston delivered 22 passing tests on schedule. Full team completed Phase 1: Linus (7 code tasks), Basher (4 infra tasks), Rusty (3 docs deliverables). Commit `06045c6` on `squad/improvement-plan` contains all work and is ready for merge. No critical blockers. Deferred: emoji encoding fix (Windows charset), Phase 2 architecture design. Next: Wire test runner into GitHub Actions.

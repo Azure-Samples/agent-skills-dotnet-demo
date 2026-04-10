@@ -15,45 +15,62 @@ A sample .NET 10 console application showcasing [Microsoft Agent Framework Agent
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
 - An Azure subscription
 - Python 3.x (for the Python skill)
+- [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) (for `setup.ps1`; optional if setting up manually)
 
-## Setup Environment (Optional)
+## Setup Environment
 
-If you already have a `gpt-5-mini` Azure OpenAI model deployed, skip to Option B and set User Secrets manually.
+**Decision Tree:**
+
+```
+Do you already have an Azure OpenAI (gpt-5-mini) model deployed?
+│
+├─ YES → Skip to "Option B: Manual Setup" (set User Secrets)
+│
+└─ NO → Choose:
+     ├─ Option A: Automated (setup.ps1) ← Easiest
+     └─ Option B: Manual (skip setup.ps1, follow manual steps)
+```
 
 ### Option A: Deploy with azd (Automated)
 
-Install [Azure Developer CLI (azd)](https://learn.microsoft.com/azure/developer/azure-developer-cli/install-azd) and [Azure CLI (az)](https://learn.microsoft.com/cli/azure/install-azure-cli), then run:
+If you don't have Azure OpenAI deployed yet, this is easiest.
+
+Install [Azure Developer CLI (azd)](https://learn.microsoft.com/azure/developer/azure-developer-cli/install-azd) and [Azure CLI (az)](https://learn.microsoft.com/cli/azure/install-azure-cli), then:
 
 ```powershell
+az login --tenant <your-tenant-id>
 ./setup.ps1
 ```
 
-This deploys the Azure OpenAI resource and configures User Secrets automatically.
+This deploys the Azure OpenAI resource, configures User Secrets, and prints the exact `az login` command to use.
 
 ### Option B: Manual Setup
 
-If you already have a deployed model, set User Secrets:
+If you already have Azure OpenAI deployed or prefer manual configuration:
 
 ```bash
+dotnet user-secrets init --id agent-skills-demo
 dotnet user-secrets set --id agent-skills-demo "AzureOpenAI:Endpoint" "https://<your-resource>.openai.azure.com/"
 dotnet user-secrets set --id agent-skills-demo "AzureOpenAI:Deployment" "gpt-5-mini"
 ```
 
-(Replace `<your-resource>` with your actual Azure OpenAI resource name.)
+Replace `<your-resource>` with your actual Azure OpenAI resource name (e.g., `my-openai-resource`).
 
 ## Run the Demo
 
-```bash
-dotnet run src/agentSkillsDemo.cs
-```
-
-The app uses `AzureCliCredential`, so you need to log in first:
+The app uses `AzureCliCredential`, so log in first:
 
 ```bash
 az login --tenant <your-tenant-id>
 ```
 
-> ⚠️ If you ran `setup.ps1`, it prints the exact `az login --tenant ...` command at the end. Use that — a plain `az login` may default to the wrong tenant.
+> ⚠️ **If you ran `setup.ps1`**, it prints the exact `az login` command at the end. Copy and paste it exactly — a plain `az login` may default to the wrong tenant.
+
+Then run:
+
+```bash
+dotnet run src/agentSkillsDemo.cs
+```
 
 ### What Happens
 
@@ -82,9 +99,43 @@ The demo runs **three prompts**, each triggering a different skill with inline s
 2. **Data Analyzer** — Analyzes CSV sales data for trends, top performers, and anomalies
 3. **Code Reviewer** — Reviews a C# code snippet for bugs, performance issues, and best practices
 
-The `FileAgentSkillsProvider` exposes skills as tools — the model reads skill descriptions and automatically picks the best match for each prompt.
+The `FileAgentSkillsProvider` scans `skills/` at startup and exposes skills as tools — the model reads skill descriptions and automatically picks the best match for each prompt.
 
-> 📖 For detailed steps and configuration, see the [docs](docs/) folder.
+## Verify Your Setup
+
+After running the demo, verify everything worked:
+
+```
+✅ Three prompts executed successfully
+✅ Each prompt returned structured output
+✅ No auth/credential errors
+✅ No missing skills warnings
+```
+
+If something failed, see the **Troubleshooting** section below.
+
+---
+
+## Troubleshooting
+
+**Problem:** `AuthenticationFailedException` or credential errors  
+**Fix:** See [Error Handling Guide](docs/error-handling.md#azure-credential-failures) — Usually an `az login` issue.
+
+**Problem:** Python skill fails or no output  
+**Fix:** See [Error Handling Guide](docs/error-handling.md#python-not-available) — Check Python is installed and in PATH.
+
+**Problem:** Skills not found or agent has no tools  
+**Fix:** See [Error Handling Guide](docs/error-handling.md#missing-skills-directory) — Verify `skills/` directory structure.
+
+For **10+ common errors** with detailed fixes, see [docs/error-handling.md](docs/error-handling.md).
+
+---
+
+## Learn More
+
+- 📖 **[Extending the Framework](docs/extending-framework.md)** — Build new skills (prompt-only, .NET script, Python script)
+- 📖 **[Error Handling Reference](docs/error-handling.md)** — Troubleshoot Azure, Python, User Secrets, network issues
+- 📖 **[Full scenario walkthrough](src/agentSkillsDemo.md)** — Detailed explanation of every concept and code step
 
 ## Skills Overview
 
@@ -114,7 +165,8 @@ azd down --purge
 
 The `--purge` flag permanently deletes the Azure OpenAI resource (avoiding soft-delete charges). If you skip `--purge`, the resource enters a soft-deleted state and can be recovered within 48 hours.
 
-## Learn More
+## Official Resources
 
 - [Agent Skills Blog Post](https://devblogs.microsoft.com/semantic-kernel/give-your-agents-domain-expertise-with-agent-skills-in-microsoft-agent-framework/)
 - [Agent Skills Documentation](https://learn.microsoft.com/en-us/agent-framework/agents/skills)
+- [Azure OpenAI Documentation](https://learn.microsoft.com/en-us/azure/ai-services/openai/)
