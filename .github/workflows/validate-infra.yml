@@ -1,0 +1,26 @@
+name: Validate Bicep Infrastructure
+
+on:
+  pull_request:
+    paths:
+      - 'infra/**'
+  push:
+    paths:
+      - 'infra/**'
+    branches:
+      - main
+
+jobs:
+  validate-bicep:
+    name: Validate Bicep Templates
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build main.bicep
+        run: az bicep build --file infra/main.bicep
+
+      - name: Lint Bicep templates
+        run: az bicep lint --file infra/main.bicep

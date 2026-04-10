@@ -11,6 +11,14 @@ if (!File.Exists(filePath))
 
 var lines = File.ReadAllLines(filePath);
 var totalLines = lines.Length;
+
+if (totalLines == 0)
+{
+    Console.WriteLine($"=== Code Analysis: {Path.GetFileName(filePath)} ===");
+    Console.WriteLine("File is empty (0 lines). Nothing to analyze.");
+    return;
+}
+
 var emptyLines = lines.Count(l => string.IsNullOrWhiteSpace(l));
 var todoCount = lines.Count(l => l.Contains("TODO", StringComparison.OrdinalIgnoreCase));
 var longLines = lines.Count(l => l.Length > 120);

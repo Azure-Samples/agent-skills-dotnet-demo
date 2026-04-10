@@ -5,15 +5,20 @@
 // Usage: dotnet run src/agentSkillsDemo.cs
 // =============================================================================
 
-#:package Microsoft.Agents.AI@*-*
-#:package Microsoft.Agents.AI.OpenAI@*-*
+#:package Microsoft.Agents.AI@1.0.0
+#:package Microsoft.Agents.AI.OpenAI@1.0.0
 #:package Azure.AI.OpenAI@2.8.0-beta.1
-#:package Azure.Identity@*-*
-#:package Microsoft.Extensions.Configuration@*-*
-#:package Microsoft.Extensions.Configuration.UserSecrets@*-*
+#:package Azure.Identity@1.20.0
+#:package Microsoft.Extensions.Configuration@10.0.5
+#:package Microsoft.Extensions.Configuration.UserSecrets@10.0.5
 
+// MAAI001: Microsoft.Agents.AI marks some APIs as experimental during the 1.0 stabilization period.
+// OPENAI001: Azure.AI.OpenAI 2.8.0-beta.1 is pre-release; its APIs are subject to change.
+// Both pragmas are required until GA releases remove the [Experimental] attributes.
 #pragma warning disable MAAI001, OPENAI001
 
+using System.Diagnostics;
+using Azure;
 using Azure.AI.OpenAI;
 using Azure.Identity;
 using Microsoft.Agents.AI;
@@ -33,14 +38,66 @@ var endpoint = config["AzureOpenAI:Endpoint"]
 var deploymentName = config["AzureOpenAI:Deployment"]
     ?? "gpt-5-mini";
 
-// Step 2: Create the skills provider pointing to the skills directory
-// FileAgentSkillsProvider reads SKILL.md files and makes them available to the agent
+// ── Pre-flight validation ──────────────────────────────────────────────────
+Console.WriteLine("=== Pre-flight Checks ===\n");
+
+// Check that skills directory exists
 var skillsDir = Path.Combine(Directory.GetCurrentDirectory(), "skills");
-var skillsProvider = new FileAgentSkillsProvider(skillPath: skillsDir);
+if (Directory.Exists(skillsDir))
+{
+    var skillCount = Directory.GetDirectories(skillsDir).Length;
+    Console.WriteLine($"✅ Skills directory found: {skillsDir} ({skillCount} skill(s))");
+}
+else
+{
+    Console.WriteLine($"❌ Skills directory not found: {skillsDir}");
+    Console.WriteLine("   Make sure you run this from the repository root.");
+    return;
+}
+
+// Verify User Secrets are configured (endpoint was loaded above)
+Console.WriteLine($"✅ Azure OpenAI endpoint configured");
+Console.WriteLine($"✅ Deployment: {deploymentName}");
+
+// Check Python availability (needed for data-analyzer skill)
+try
+{
+    var psi = new ProcessStartInfo
+    {
+        FileName = "python",
+        Arguments = "--version",
+        RedirectStandardOutput = true,
+        RedirectStandardError = true,
+        UseShellExecute = false,
+        CreateNoWindow = true,
+    };
+    using var proc = Process.Start(psi);
+    if (proc is not null)
+    {
+        var version = (await proc.StandardOutput.ReadToEndAsync()).Trim();
+        if (string.IsNullOrEmpty(version))
+            version = (await proc.StandardError.ReadToEndAsync()).Trim();
+        await proc.WaitForExitAsync();
+        Console.WriteLine($"✅ Python available: {version}");
+    }
+}
+catch
+{
+    Console.WriteLine("⚠️  Python not found. The data-analyzer skill requires Python.");
+    Console.WriteLine("   Install Python from https://python.org or add it to PATH.");
+}
+
+Console.WriteLine();
+
+// Step 2: Create the skills provider pointing to the skills directory
+// AgentSkillsProvider reads SKILL.md files and makes them available to the agent
+var skillsProvider = new AgentSkillsProvider(skillsDir);
 
 // Step 3: Create the Azure OpenAI agent with skills attached
+// DefaultAzureCredential tries, in order: managed identity, Azure CLI, interactive browser,
+// environment variables — so this works in dev, CI, and production without code changes.
 AIAgent agent = new AzureOpenAIClient(
-    new Uri(endpoint), new AzureCliCredential())
+    new Uri(endpoint), new DefaultAzureCredential())
     .GetResponsesClient(deploymentName)
     .AsAIAgent(new ChatClientAgentOptions
     {
@@ -73,9 +130,27 @@ var meetingPrompt = """
     """;
 
 Console.WriteLine(meetingPrompt);
-AgentResponse response1 = await agent.RunAsync(meetingPrompt);
-Console.WriteLine("--- Response ---");
-Console.WriteLine(response1.Text);
+try
+{
+    AgentResponse response1 = await agent.RunAsync(meetingPrompt);
+    Console.WriteLine("--- Response ---");
+    Console.WriteLine(response1.Text);
+}
+catch (RequestFailedException ex)
+{
+    Console.WriteLine($"❌ Azure API error: {ex.Message}");
+    Console.WriteLine("   Check your endpoint URL, deployment name, and RBAC permissions.");
+    Console.WriteLine("   Run: az role assignment list --assignee <your-id> --scope <resource-id>");
+}
+catch (OperationCanceledException)
+{
+    Console.WriteLine("❌ Request timed out. The Azure OpenAI service may be under heavy load.");
+    Console.WriteLine("   Try again in a few seconds.");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"❌ Unexpected error: {ex.Message}");
+}
 
 // --- Skill 2: Data Analyzer ---
 Console.WriteLine("\n========================================");
@@ -95,9 +170,27 @@ var dataPrompt = """
     """;
 
 Console.WriteLine(dataPrompt);
-AgentResponse response2 = await agent.RunAsync(dataPrompt);
-Console.WriteLine("--- Response ---");
-Console.WriteLine(response2.Text);
+try
+{
+    AgentResponse response2 = await agent.RunAsync(dataPrompt);
+    Console.WriteLine("--- Response ---");
+    Console.WriteLine(response2.Text);
+}
+catch (RequestFailedException ex)
+{
+    Console.WriteLine($"❌ Azure API error: {ex.Message}");
+    Console.WriteLine("   Possible rate limiting or authentication issue.");
+    Console.WriteLine("   Check: az account show (correct subscription?)");
+}
+catch (OperationCanceledException)
+{
+    Console.WriteLine("❌ Request timed out. The Azure OpenAI service may be under heavy load.");
+    Console.WriteLine("   Try again in a few seconds.");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"❌ Unexpected error: {ex.Message}");
+}
 
 // --- Skill 3: Code Reviewer ---
 Console.WriteLine("\n========================================");
@@ -125,6 +218,24 @@ var codePrompt = """
     """;
 
 Console.WriteLine(codePrompt);
-AgentResponse response3 = await agent.RunAsync(codePrompt);
-Console.WriteLine("--- Response ---");
-Console.WriteLine(response3.Text);
+try
+{
+    AgentResponse response3 = await agent.RunAsync(codePrompt);
+    Console.WriteLine("--- Response ---");
+    Console.WriteLine(response3.Text);
+}
+catch (RequestFailedException ex)
+{
+    Console.WriteLine($"❌ Azure API error: {ex.Message}");
+    Console.WriteLine("   If 429 (rate limit): wait and retry, or check your quota.");
+    Console.WriteLine("   If 401/403: re-authenticate with: az login");
+}
+catch (OperationCanceledException)
+{
+    Console.WriteLine("❌ Request timed out. The Azure OpenAI service may be under heavy load.");
+    Console.WriteLine("   Try again in a few seconds.");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"❌ Unexpected error: {ex.Message}");
+}
